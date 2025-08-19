@@ -2,7 +2,7 @@
 #define GRAPH_H
 
 #include <vector>
-#include <iostream>
+// #include <iostream>
 
 
 struct Edge {
@@ -15,16 +15,24 @@ class Graph {
     int num_vertices;
     // const float default_weight = 1.0;
     std::vector<std::vector<Edge>> adjList;
+    int k; int t;// parameters
 
     public:
     Graph(int n);
     Graph(int n, const std::vector<std::vector<int>>& edges);
     Graph(int n, const std::vector<std::vector<int>>& edges, const std::vector<double>& weights);
 
-    float getEdgeWeight(int u, int v);
+    int getNumVertices();
+    std::vector<Edge> getConnections(int src);
     // void buildGraph(const std::vector<std::vector<Edge>>& edges, const std::vector<double>& weights);
-    void addEdge(int src, int dest, double weight);
-    void printAdjacencyMatrix();
+    void addEdge(int src, int dest, double weight = 1.0);
+
+    void calcK();
+    void calcT();
+    int getT();
+    int getK();
+    
+    void printAdjacencyList();
 
 };
 
