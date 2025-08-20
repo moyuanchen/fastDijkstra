@@ -1,5 +1,6 @@
 #include "BMSSPTestFramework.h"
 #include "Dijkstra.h"
+#include "Debug.h"
 #include <iostream>
 #include <algorithm>
 #include <queue>
@@ -8,6 +9,7 @@
 #include <iomanip>
 #include <numeric>
 #include <random>
+#include <set>
 
 BMSSPTestFramework::BMSSPTestFramework(unsigned int seed) : rng(seed) {}
 
@@ -141,6 +143,123 @@ Graph BMSSPTestFramework::generateCompleteGraph(int n, WeightDistribution weight
             }
         }
     }
+    
+    return graph;
+}
+
+/**
+ * Generate a connected graph with guaranteed connectivity.
+ * For directed graphs: Ensures strong connectivity (path exists from any vertex to any other).
+ * For undirected graphs: Ensures weak connectivity (path exists ignoring edge direction).
+ * 
+ * Algorithm:
+ * 1. Create a spanning structure for connectivity:
+ *    - Directed: Create a directed cycle through all vertices
+ *    - Undirected: Create a spanning tree
+ * 2. Add remaining edges randomly to reach target edge count
+ * 
+ * @param num_vertices Number of vertices in the graph
+ * @param num_edges Target number of edges (must be >= num_vertices for connectivity)
+ * @param dist Weight distribution for edge weights
+ * @param is_directed Whether to create a directed graph (default: true)
+ * @return Connected graph with specified properties
+ */
+Graph BMSSPTestFramework::generateConnectedGraph(int num_vertices, int num_edges, 
+                                                WeightDistribution dist, bool is_directed) {
+    if (num_vertices <= 0) {
+        return Graph(1);
+    }
+    
+    Graph graph(num_vertices);
+    
+    // Calculate minimum edges needed for connectivity
+    int min_edges_for_connectivity = is_directed ? num_vertices : (num_vertices - 1);
+    
+    // Ensure we have enough edges for connectivity
+    if (num_edges < min_edges_for_connectivity) {
+        DEBUG_PRINT("Warning: Requested " << num_edges << " edges, but need at least " 
+                   << min_edges_for_connectivity << " for connectivity");
+        num_edges = min_edges_for_connectivity;
+    }
+    
+    // Generate all needed weights
+    auto weights = generateWeights(num_edges, dist);
+    int weight_idx = 0;
+    
+    // Step 1: Create connectivity backbone
+    if (is_directed) {
+        // For directed graphs: Create a directed cycle to ensure strong connectivity
+        // This guarantees a path from any vertex to any other vertex
+        DEBUG_PRINT("Creating directed cycle for strong connectivity");
+        for (int i = 0; i < num_vertices; ++i) {
+            int next = (i + 1) % num_vertices;
+            graph.addEdge(i, next, weights[weight_idx++]);
+        }
+    } else {
+        // For undirected graphs: Create a spanning tree
+        // We simulate undirected edges by adding both directions
+        DEBUG_PRINT("Creating spanning tree for connectivity");
+        
+        // Create a random spanning tree using a modified Prim's algorithm
+        std::vector<bool> in_tree(num_vertices, false);
+        in_tree[0] = true;
+        
+        for (int i = 1; i < num_vertices; ++i) {
+            // Choose a random vertex already in the tree
+            std::vector<int> tree_vertices;
+            for (int v = 0; v < num_vertices; ++v) {
+                if (in_tree[v]) {
+                    tree_vertices.push_back(v);
+                }
+            }
+            
+            std::uniform_int_distribution<int> tree_choice(0, tree_vertices.size() - 1);
+            int chosen_tree_vertex = tree_vertices[tree_choice(rng)];
+            
+            // Add bidirectional edge between chosen_tree_vertex and vertex i
+            graph.addEdge(chosen_tree_vertex, i, weights[weight_idx++]);
+            graph.addEdge(i, chosen_tree_vertex, weights[weight_idx++]);
+            
+            in_tree[i] = true;
+        }
+    }
+    
+    // Step 2: Add remaining edges randomly
+    int edges_added = is_directed ? num_vertices : 2 * (num_vertices - 1);
+    int remaining_edges = num_edges - edges_added;
+    
+    DEBUG_PRINT("Adding " << remaining_edges << " additional random edges");
+    
+    std::uniform_int_distribution<int> vertex_dist(0, num_vertices - 1);
+    std::set<std::pair<int, int>> existing_edges;
+    
+    // Track existing edges to avoid duplicates
+    // Note: This is a simplified approach; in a production system, 
+    // you might want to track this more efficiently
+    
+    while (remaining_edges > 0 && weight_idx < weights.size()) {
+        int src = vertex_dist(rng);
+        int dest = vertex_dist(rng);
+        
+        // Avoid self-loops and duplicate edges
+        if (src != dest && existing_edges.find({src, dest}) == existing_edges.end()) {
+            graph.addEdge(src, dest, weights[weight_idx++]);
+            existing_edges.insert({src, dest});
+            remaining_edges--;
+            
+            // For undirected graphs, also add the reverse edge
+            if (!is_directed && existing_edges.find({dest, src}) == existing_edges.end()) {
+                if (remaining_edges > 0 && weight_idx < weights.size()) {
+                    graph.addEdge(dest, src, weights[weight_idx++]);
+                    existing_edges.insert({dest, src});
+                    remaining_edges--;
+                }
+            }
+        }
+    }
+    
+    DEBUG_PRINT("Generated connected graph with " << num_vertices << " vertices and " 
+               << (num_edges - remaining_edges) << " edges");
     
     return graph;
 }
@@ -346,30 +465,39 @@ BMSSPTestCase BMSSPTestFramework::generateTestCase(const TestParameters& params)
     test_case.params = params;
     test_case.description = params.test_name;
     
-    // Generate graph based on type
-    switch (params.graph_type) {
-        case GraphType::RANDOM_SPARSE:
-            test_case.graph = generateRandomGraph(params.num_vertices, params.num_edges, params.weight_dist);
-            break;
-        case GraphType::TREE:
-            test_case.graph = generateTreeGraph(params.num_vertices, params.weight_dist);
-            break;
-        case GraphType::CYCLE:
-            test_case.graph = generateCycleGraph(params.num_vertices, params.weight_dist);
-            break;
-        case GraphType::GRID_2D: {
-            int side = static_cast<int>(std::sqrt(params.num_vertices));
-            test_case.graph = generateGrid2D(side, side, params.weight_dist);
-            break;
+    // Generate graph based on type and connectivity requirements
+    if (params.ensure_connectivity) {
+        // Use the new connected graph generation function
+        DEBUG_PRINT("Generating connected graph with " << params.num_vertices 
+                   << " vertices and " << params.num_edges << " edges");
+        test_case.graph = generateConnectedGraph(params.num_vertices, params.num_edges, 
+                                                params.weight_dist, params.is_directed);
+    } else {
+        // Use the existing graph generation methods
+        switch (params.graph_type) {
+            case GraphType::RANDOM_SPARSE:
+                test_case.graph = generateRandomGraph(params.num_vertices, params.num_edges, params.weight_dist);
+                break;
+            case GraphType::TREE:
+                test_case.graph = generateTreeGraph(params.num_vertices, params.weight_dist);
+                break;
+            case GraphType::CYCLE:
+                test_case.graph = generateCycleGraph(params.num_vertices, params.weight_dist);
+                break;
+            case GraphType::GRID_2D: {
+                int side = static_cast<int>(std::sqrt(params.num_vertices));
+                test_case.graph = generateGrid2D(side, side, params.weight_dist);
+                break;
+            }
+            case GraphType::STAR:
+                test_case.graph = generateStarGraph(params.num_vertices, params.weight_dist);
+                break;
+            case GraphType::COMPLETE:
+                test_case.graph = generateCompleteGraph(params.num_vertices, params.weight_dist);
+                break;
+            default:
+                test_case.graph = generateRandomGraph(params.num_vertices, params.num_edges, params.weight_dist);
         }
-        case GraphType::STAR:
-            test_case.graph = generateStarGraph(params.num_vertices, params.weight_dist);
-            break;
-        case GraphType::COMPLETE:
-            test_case.graph = generateCompleteGraph(params.num_vertices, params.weight_dist);
-            break;
-        default:
-            test_case.graph = generateRandomGraph(params.num_vertices, params.num_edges, params.weight_dist);
     }
     
     // Set graph parameters
@@ -402,6 +530,8 @@ BMSSPTestCase BMSSPTestFramework::generateTestCase(const TestParameters& params)
 
 // Test execution
 BMSSPTestOutput BMSSPTestFramework::executeBMSSP(const BMSSPTestCase& test_case) {
+    DEBUG_FUNCTION_ENTRY("executeBMSSP", "graph.vertices=" << test_case.graph.getNumVertices() << ", sources.size=" << test_case.sources.size() << ", bound=" << test_case.bound);
+    
     BMSSPTestOutput output;
     
     try {
@@ -411,17 +541,30 @@ BMSSPTestOutput BMSSPTestFramework::executeBMSSP(const BMSSPTestCase& test_case)
         Graph graph_copy = test_case.graph; // Create a copy since BMSSP might modify the graph
         int n = graph_copy.getNumVertices();
         
+        DEBUG_PRINT("Created graph copy with n=" << n);
+        DEBUG_MEMORY("Allocated graph copy, preparing distance/predecessor arrays");
+        
         std::vector<double> distances(n, std::numeric_limits<double>::max());
         std::vector<int> predecessors(n, -1);
         
+        DEBUG_MEMORY("distances vector size=" << distances.size() << ", predecessors size=" << predecessors.size());
+        
+        // Validate source vertices
+        for (int src : test_case.sources) {
+            DEBUG_BOUNDS_CHECK(src, n, "source vertex");
+        }
+        
         // Initialize source distances
         for (int src : test_case.sources) {
+            DEBUG_PRINT("Initializing source " << src << " with distance 0");
             distances[src] = 0.0;
         }
         
         // Run BMSSP
         // Calculate level according to paper: level = ceil(log_t(log_n))
         int t = graph_copy.getT();
+        
+        DEBUG_PRINT("Graph parameters: k=" << graph_copy.getK() << ", t=" << t);
         
         // Calculate level = ceil(log_t(log_n))
         // log_t(x) = log(x) / log(t)
@@ -433,14 +576,23 @@ BMSSPTestOutput BMSSPTestFramework::executeBMSSP(const BMSSPTestCase& test_case)
         // Ensure level is at least 1 for meaningful recursion
         level = std::max(1, level);
         
+        DEBUG_PRINT("Level calculation: n=" << n << ", t=" << t << ", log(n)=" << log_n 
+                  << ", log(t)=" << log_t_val << ", log_t(log(n))=" << log_t_log_n 
+                  << ", ceil=" << std::ceil(log_t_log_n) << ", level=" << level);
+        
         std::cout << "  Debug: n=" << n << ", t=" << t << ", log(n)=" << log_n 
                   << ", log(t)=" << log_t_val << ", log_t(log(n))=" << log_t_log_n 
                   << ", ceil=" << std::ceil(log_t_log_n) << ", level=" << level << std::endl;
+        
+        DEBUG_PRINT("Calling runBMSSP with level=" << level << ", bound=" << test_case.bound << ", sources=" << vectorToString(test_case.sources));
+        
         BMSSPResult result = runBMSSP(graph_copy, distances, predecessors, 
                                      level, test_case.bound, test_case.sources);
         
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        
+        DEBUG_PRINT("BMSSP completed successfully: new_bound=" << result.new_bound << ", completed_vertices.size=" << result.completed_vertices.size());
         
         // Fill output structure
         output.new_bound = result.new_bound;
@@ -450,13 +602,23 @@ BMSSPTestOutput BMSSPTestFramework::executeBMSSP(const BMSSPTestCase& test_case)
         output.recursive_calls = 0; // Would need instrumentation to track this
         output.total_vertices_processed = result.completed_vertices.size();
         
+        DEBUG_PRINT("Output prepared: execution_time_ms=" << output.execution_time_ms << ", total_vertices_processed=" << output.total_vertices_processed);
+        
     } catch (const std::exception& e) {
+        DEBUG_PRINT("Exception caught in executeBMSSP: " << e.what());
         output.execution_success = false;
         output.error_message = e.what();
         output.new_bound = -1.0;
         output.execution_time_ms = 0.0;
+    } catch (...) {
+        DEBUG_PRINT("Unknown exception caught in executeBMSSP");
+        output.execution_success = false;
+        output.error_message = "Unknown exception occurred";
+        output.new_bound = -1.0;
+        output.execution_time_ms = 0.0;
     }
     
+    DEBUG_FUNCTION_EXIT("executeBMSSP", "success=" << output.execution_success << ", new_bound=" << output.new_bound);
     return output;
 }
 

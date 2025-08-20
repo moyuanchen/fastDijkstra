@@ -1,13 +1,21 @@
 #include "Graph.h"
+#include "Debug.h"
 #include <vector>
 #include <iostream>
 #include <cmath>
 
 Graph::Graph (int n) {
+    DEBUG_FUNCTION_ENTRY("Graph::Graph", "n=" << n);
+    
     this->num_vertices = n;
     this->adjList.resize(n);
+    
+    DEBUG_MEMORY("Allocated adjacency list with size=" << adjList.size());
+    
     this->calcK();
     this->calcT();
+    
+    DEBUG_PRINT("Graph created: n=" << num_vertices << ", k=" << k << ", t=" << t);
 }
 
 Graph::Graph (int n, const std::vector<std::vector<int>>& edges) : Graph(n) {
@@ -42,12 +50,30 @@ Graph& Graph::operator=(const Graph& other) {
 }
 
 void Graph::addEdge(int src, int dest, double weight) {
-    Edge e; e.dest = dest; e.weight = weight;
+    DEBUG_FUNCTION_ENTRY("Graph::addEdge", "src=" << src << ", dest=" << dest << ", weight=" << weight);
+    
+    DEBUG_BOUNDS_CHECK(src, num_vertices, "source vertex");
+    DEBUG_BOUNDS_CHECK(dest, num_vertices, "destination vertex");
+    
+    Edge e; 
+    e.dest = dest; 
+    e.weight = weight;
+    
+    size_t old_size = this->adjList[src].size();
     this->adjList[src].push_back(e);
+    
+    DEBUG_DATASTRUCTURE("ADD_EDGE", "adjList[" << src << "] size: " << old_size << " -> " << adjList[src].size());
 }
 
 std::vector<Edge> Graph::getConnections(int src) const {
-    return this->adjList[src];
+    DEBUG_BOUNDS_CHECK(src, num_vertices, "source vertex in getConnections");
+    
+    if (src >= 0 && src < num_vertices) {
+        return this->adjList[src];
+    } else {
+        DEBUG_PRINT("WARNING: Invalid vertex " << src << " in getConnections, returning empty vector");
+        return std::vector<Edge>();
+    }
 }
 
 int Graph::getNumVertices() const {

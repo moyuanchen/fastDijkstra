@@ -1,2 +1,4 @@
 build/
 fastdijkstra.egg-info/
+.DS_Store
+.vscode/

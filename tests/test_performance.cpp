@@ -1,4 +1,5 @@
 #include "BMSSPTestFramework.h"
+#include "Debug.h"
 #include <iostream>
 #include <iomanip>
 #include <chrono>
@@ -659,6 +660,7 @@ void printUsage(const char* program_name) {
               << "  --stress          Run stress tests\n"
               << "  --large-scale     Run large-scale performance tests (10^5 vertices)\n"
               << "  --all             Run all performance tests (default)\n"
+              << "  --debug, -d       Enable debug output\n"
               << "  --help            Show this help message\n"
               << std::endl;
 }
@@ -667,6 +669,10 @@ int main(int argc, char* argv[]) {
     std::cout << "=== PERFORMANCE AND SCALABILITY TEST SUITE ===" << std::endl;
     std::cout << "Analyzing performance characteristics and scaling behavior" << std::endl;
     std::cout << std::string(60, '=') << std::endl;
+    
+    // Initialize debug system
+    initializeDebug(argc, argv);
+    DEBUG_PRINT("Performance test suite starting");
     
     PerformanceTestRunner runner;
     
@@ -680,6 +686,9 @@ int main(int argc, char* argv[]) {
         if (arg == "--help") {
             printUsage(argv[0]);
             return 0;
+        } else if (arg == "--debug" || arg == "-d") {
+            // Already handled in initializeDebug
+            continue;
         } else if (arg == "--scalability") {
             run_scalability = true; run_all = false;
         } else if (arg == "--graph-types") {

@@ -63,6 +63,8 @@ struct TestParameters {
     int k_param;
     int t_param;
     std::string test_name;
+    bool ensure_connectivity = false;  // New parameter to guarantee connectivity
+    bool is_directed = true;          // New parameter to specify if graph should be directed
 };
 
 struct BMSSPTestCase {
@@ -130,6 +132,9 @@ private:
     Graph generateStarGraph(int n, WeightDistribution weight_dist);
     Graph generateCompleteGraph(int n, WeightDistribution weight_dist);
     Graph generateDisconnectedGraph(int n, int components, WeightDistribution weight_dist);
+    
+    // New connected graph generation function
+    Graph generateConnectedGraph(int num_vertices, int num_edges, WeightDistribution dist, bool is_directed = true);
     
     // Weight generation helpers
     double generateWeight(WeightDistribution dist);

@@ -22,6 +22,7 @@ void printUsage(const char* program_name) {
               << "  --comprehensive   Run comprehensive algorithm tests\n"
               << "  --edge-cases      Run edge cases and error handling tests\n"
               << "  --performance     Run performance and scalability tests\n"
+              << "  --large-scale     Run large scale testing (up to 10K vertices)\n"
               << "  --all             Run all test suites (default)\n\n"
               << "Additional Options:\n"
               << "  --quick           Run quick subset of tests\n"
@@ -84,6 +85,7 @@ void printSummary(const std::vector<std::pair<std::string, int>>& results) {
         std::cout << "✓ Comprehensive testing completed" << std::endl;
         std::cout << "✓ Edge cases handled correctly" << std::endl;
         std::cout << "✓ Performance characteristics analyzed" << std::endl;
+        std::cout << "✓ Large scale scalability verified" << std::endl;
         std::cout << "\n🚀 BMSSP implementation is ready for use!" << std::endl;
     } else {
         std::cout << "\n⚠️  Some test suites failed. Please review the output above." << std::endl;
@@ -98,7 +100,7 @@ int main(int argc, char* argv[]) {
     
     // Parse command line arguments
     bool run_all = true;
-    bool run_core = false, run_comprehensive = false, run_edge_cases = false, run_performance = false;
+    bool run_core = false, run_comprehensive = false, run_edge_cases = false, run_performance = false, run_large_scale = false;
     bool quick_mode = false, detailed_mode = false;
     
     for (int i = 1; i < argc; i++) {
@@ -114,6 +116,8 @@ int main(int argc, char* argv[]) {
             run_edge_cases = true; run_all = false;
         } else if (arg == "--performance") {
             run_performance = true; run_all = false;
+        } else if (arg == "--large-scale") {
+            run_large_scale = true; run_all = false;
         } else if (arg == "--all") {
             run_all = true;
         } else if (arg == "--quick") {
@@ -167,6 +171,11 @@ int main(int argc, char* argv[]) {
         
         int result = runTestSuite("Performance and Scalability Tests", "test_performance", args);
         results.emplace_back("Performance Tests", result);
+    }
+    
+    if (run_all || run_large_scale) {
+        int result = runTestSuite("Large Scale Testing", "test_large_scale");
+        results.emplace_back("Large Scale Tests", result);
     }
     
     // Print final summary
