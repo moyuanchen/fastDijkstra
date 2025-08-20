@@ -1,4 +1,44 @@
+# Build directories
 build/
-fastdijkstra.egg-info/
+dist/
+*.egg-info/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+*.pyd
+
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# C/C++ compiled files
+*.o
+*.a
+*.exe
+*.dll
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Logs and temporary files
+*.log
+nohup.out
+*.tmp
