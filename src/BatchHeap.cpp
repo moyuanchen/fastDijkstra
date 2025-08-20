@@ -101,6 +101,18 @@ void BatchHeap::split(std::list<Block>::iterator block_it) {
     this->D1_bound[smaller.upper_bound] = smaller_it;
     this->D1_bound[larger.upper_bound] = larger_it;
 
+    // CRITICAL FIX: Update address books for all items in the new blocks
+    // This was the missing piece that caused segmentation faults
+    for (auto item_it = smaller_it->block.begin(); item_it != smaller_it->block.end(); ++item_it) {
+        this->address_book_l1_D1[item_it->first] = smaller_it;
+        this->address_book_l2[item_it->first] = item_it;
+    }
+    
+    for (auto item_it = larger_it->block.begin(); item_it != larger_it->block.end(); ++item_it) {
+        this->address_book_l1_D1[item_it->first] = larger_it;
+        this->address_book_l2[item_it->first] = item_it;
+    }
+
 }
 
 void BatchHeap::batchPrepend(std::list<std::pair<int, double>> items) {

@@ -149,6 +149,30 @@ public:
         runExtendedTest();
     }
     
+    void runLargeScaleTests() {
+        std::cout << "\n=== LARGE-SCALE PERFORMANCE ANALYSIS (10^5 vertices) ===" << std::endl;
+        std::cout << std::string(60, '=') << std::endl;
+        std::cout << "Testing BMSSP vs Dijkstra performance on large graphs..." << std::endl;
+        
+        // Start with more conservative sizes and build up
+        std::vector<int> large_sizes = {2500, 3000, 4000, 5000, 7500};
+        
+        std::cout << "\n" << std::setw(10) << "Size" 
+                  << std::setw(12) << "Edges" 
+                  << std::setw(15) << "BMSSP (ms)" 
+                  << std::setw(15) << "Dijkstra (ms)" 
+                  << std::setw(12) << "Speedup" 
+                  << std::setw(12) << "Winner" << std::endl;
+        std::cout << std::string(75, '-') << std::endl;
+        
+        for (int n : large_sizes) {
+            std::cout << "Testing graph size: " << n << " vertices..." << std::endl;
+            runLargeScaleComparisonTest(n);
+        }
+        
+        std::cout << "\n=== LARGE-SCALE ANALYSIS COMPLETE ===" << std::endl;
+    }
+    
     void generatePerformanceReport() {
         std::cout << "\n=== PERFORMANCE ANALYSIS REPORT ===" << std::endl;
         std::cout << std::string(60, '=') << std::endl;
@@ -319,6 +343,67 @@ private:
                       << std::setw(12) << "ERROR"
                       << std::setw(12) << "N/A"
                       << std::setw(10) << "FAIL" << std::endl;
+        }
+    }
+    
+    void runLargeScaleComparisonTest(int size) {
+        // Create test case with sparse graph to keep memory manageable
+        TestParameters params;
+        params.num_vertices = size;
+        params.num_edges = size * 3; // Very sparse graph: 3 edges per vertex on average
+        params.graph_type = GraphType::RANDOM_SPARSE;
+        params.weight_dist = WeightDistribution::UNIFORM;
+        params.source_method = SourceGenMethod::RANDOM;
+        params.source_count = std::max(1, std::min(10, size / 1000)); // Much smaller source count
+        params.bound_type = BoundType::LOOSE;
+        params.k_param = std::max(1, std::min(5, static_cast<int>(std::sqrt(size)))); // Cap k parameter
+        params.t_param = std::min(2, params.k_param); // Ensure t <= k
+        params.test_name = "Large-scale comparison n=" + std::to_string(size);
+        
+        try {
+            std::cout << "  Generating large graph (this may take time)..." << std::endl;
+            auto test_case = framework.generateTestCase(params);
+            std::cout << "  Graph generated successfully." << std::endl;
+            
+            // Time BMSSP
+            std::cout << "  Running BMSSP with k=" << params.k_param << ", t=" << params.t_param << "..." << std::endl;
+            std::cout << "  Graph parameters: vertices=" << test_case.graph.getNumVertices() 
+                      << ", k=" << test_case.graph.getK() 
+                      << ", t=" << test_case.graph.getT() << std::endl;
+            auto start_bmssp = std::chrono::high_resolution_clock::now();
+            auto bmssp_result = framework.executeBMSSP(test_case);
+            auto end_bmssp = std::chrono::high_resolution_clock::now();
+            
+            auto bmssp_time_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_bmssp - start_bmssp).count() / 1000.0;
+            
+            // Time Dijkstra (single source for fair comparison)
+            std::cout << "  Running Dijkstra..." << std::endl;
+            auto start_dijkstra = std::chrono::high_resolution_clock::now();
+            std::vector<int> single_source = {test_case.sources[0]};
+            auto dijkstra_result = framework.runReferenceDijkstra(test_case.graph, single_source);
+            auto end_dijkstra = std::chrono::high_resolution_clock::now();
+            
+            auto dijkstra_time_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_dijkstra - start_dijkstra).count() / 1000.0;
+            
+            // Calculate speedup
+            double speedup = dijkstra_time_ms / bmssp_time_ms;
+            std::string winner = speedup > 1.0 ? "BMSSP" : "Dijkstra";
+            
+            std::cout << std::setw(10) << size
+                      << std::setw(12) << params.num_edges
+                      << std::setw(15) << std::fixed << std::setprecision(2) << bmssp_time_ms
+                      << std::setw(15) << std::fixed << std::setprecision(2) << dijkstra_time_ms
+                      << std::setw(12) << std::fixed << std::setprecision(2) << speedup << "x"
+                      << std::setw(12) << winner << std::endl;
+                      
+        } catch (const std::exception& e) {
+            std::cout << std::setw(10) << size
+                      << std::setw(12) << "ERROR"
+                      << std::setw(15) << "N/A"
+                      << std::setw(15) << "N/A"
+                      << std::setw(12) << "N/A"
+                      << std::setw(12) << "FAIL" << std::endl;
+            std::cout << "  Error: " << e.what() << std::endl;
         }
     }
     
@@ -572,6 +657,7 @@ void printUsage(const char* program_name) {
               << "  --bounds          Run bound parameter sensitivity analysis\n"
               << "  --comparison      Run BMSSP vs Dijkstra comparison\n"
               << "  --stress          Run stress tests\n"
+              << "  --large-scale     Run large-scale performance tests (10^5 vertices)\n"
               << "  --all             Run all performance tests (default)\n"
               << "  --help            Show this help message\n"
               << std::endl;
@@ -587,7 +673,7 @@ int main(int argc, char* argv[]) {
     // Parse command line arguments
     bool run_all = true;
     bool run_scalability = false, run_graph_types = false, run_bounds = false;
-    bool run_comparison = false, run_stress = false;
+    bool run_comparison = false, run_stress = false, run_large_scale = false;
     
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -604,6 +690,8 @@ int main(int argc, char* argv[]) {
             run_comparison = true; run_all = false;
         } else if (arg == "--stress") {
             run_stress = true; run_all = false;
+        } else if (arg == "--large-scale") {
+            run_large_scale = true; run_all = false;
         } else if (arg == "--all") {
             run_all = true;
         } else {
@@ -634,6 +722,10 @@ int main(int argc, char* argv[]) {
         
         if (run_all || run_stress) {
             runner.runStressTests();
+        }
+        
+        if (run_large_scale) {
+            runner.runLargeScaleTests();
         }
         
         auto end_time = std::chrono::high_resolution_clock::now();

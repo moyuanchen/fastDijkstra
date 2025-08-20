@@ -137,6 +137,7 @@ BMSSPResult runBMSSP(
     
     // Initialize BatchHeap D (line 5)
     int M = 1 << ((level - 1) * t); // 2^((l-1)*t)
+    
     BatchHeap D(M, static_cast<int>(B));
     
     // Insert pivots into D (line 6)
@@ -159,13 +160,12 @@ BMSSPResult runBMSSP(
     // Main loop (line 8)
     int target_size = k * (1 << (level * t)); // k * 2^(l*t)
     
-    int loop_count = 0;
+    // Logical constraint: can't have more vertices than exist in graph
+    if (target_size > graph.getNumVertices()) {
+        target_size = graph.getNumVertices();
+    }
+    
     while (static_cast<int>(U.size()) < target_size) {
-        loop_count++;
-        
-        if (loop_count > 100) {  // Safety break to prevent infinite loops
-            break;
-        }
         
         // Check if D is empty
         PullResults pull_result;

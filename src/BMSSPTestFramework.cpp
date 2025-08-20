@@ -420,7 +420,22 @@ BMSSPTestOutput BMSSPTestFramework::executeBMSSP(const BMSSPTestCase& test_case)
         }
         
         // Run BMSSP
-        int level = std::min(2, graph_copy.getT()); // Cap level to prevent exponential explosion
+        // Calculate level according to paper: level = ceil(log_t(log_n))
+        int t = graph_copy.getT();
+        
+        // Calculate level = ceil(log_t(log_n))
+        // log_t(x) = log(x) / log(t)
+        double log_n = std::log(static_cast<double>(n));
+        double log_t_val = std::log(static_cast<double>(t));
+        double log_t_log_n = log_n / log_t_val;
+        int level = static_cast<int>(std::ceil(log_t_log_n));
+        
+        // Ensure level is at least 1 for meaningful recursion
+        level = std::max(1, level);
+        
+        std::cout << "  Debug: n=" << n << ", t=" << t << ", log(n)=" << log_n 
+                  << ", log(t)=" << log_t_val << ", log_t(log(n))=" << log_t_log_n 
+                  << ", ceil=" << std::ceil(log_t_log_n) << ", level=" << level << std::endl;
         BMSSPResult result = runBMSSP(graph_copy, distances, predecessors, 
                                      level, test_case.bound, test_case.sources);
         
