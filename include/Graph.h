@@ -21,16 +21,22 @@ class Graph {
     Graph(int n);
     Graph(int n, const std::vector<std::vector<int>>& edges);
     Graph(int n, const std::vector<std::vector<int>>& edges, const std::vector<double>& weights);
+    
+    // Copy constructor
+    Graph(const Graph& other);
+    
+    // Assignment operator
+    Graph& operator=(const Graph& other);
 
-    int getNumVertices();
-    std::vector<Edge> getConnections(int src);
+    int getNumVertices() const;
+    std::vector<Edge> getConnections(int src) const;
     // void buildGraph(const std::vector<std::vector<Edge>>& edges, const std::vector<double>& weights);
     void addEdge(int src, int dest, double weight = 1.0);
 
     void calcK();
     void calcT();
-    int getT();
-    int getK();
+    int getT() const;
+    int getK() const;
     
     void printAdjacencyList();
 

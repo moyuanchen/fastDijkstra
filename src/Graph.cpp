@@ -25,16 +25,32 @@ Graph::Graph (int n, const std::vector<std::vector<int>>& edges, const std::vect
     }
 }
 
+// Copy constructor
+Graph::Graph(const Graph& other) 
+    : num_vertices(other.num_vertices), adjList(other.adjList), k(other.k), t(other.t) {
+}
+
+// Assignment operator
+Graph& Graph::operator=(const Graph& other) {
+    if (this != &other) {
+        num_vertices = other.num_vertices;
+        adjList = other.adjList;
+        k = other.k;
+        t = other.t;
+    }
+    return *this;
+}
+
 void Graph::addEdge(int src, int dest, double weight) {
     Edge e; e.dest = dest; e.weight = weight;
     this->adjList[src].push_back(e);
 }
 
-std::vector<Edge> Graph::getConnections(int src) {
+std::vector<Edge> Graph::getConnections(int src) const {
     return this->adjList[src];
 }
 
-int Graph::getNumVertices(){
+int Graph::getNumVertices() const {
     return this->num_vertices;
 }
 
@@ -42,7 +58,7 @@ void Graph::calcK(){
     double n = (double)this->num_vertices;
     this->k = std::floor(std::cbrt(std::log(n)));
 }
-int Graph::getK(){
+int Graph::getK() const {
     return this->k;
 }
 
@@ -51,7 +67,7 @@ void Graph::calcT(){
     double tmp = std::cbrt(std::log(n));
     this->t = std::floor(tmp * tmp);
 }
-int Graph::getT(){
+int Graph::getT() const {
     return this->t;
 }
 

@@ -9,18 +9,24 @@ FindPivotResult findPivots(Graph& graph,
     std::unordered_set<int>& S, // frontier set
     std::vector<double>& d_hat) {//current best distance
         int k = graph.getK();
+        int numVertices = graph.getNumVertices();
         FindPivotResult results;
 
         std::unordered_set<int> W = S;
         std::vector<std::unordered_set<int>> W_steps(k + 1);
+        std::vector<int> predecessors(numVertices, -1);
+        std::unordered_map<int, int> tree_sizes;
+
         W_steps[0] = S;
 
+        // Bellman-Ford Relaxation
         for (int idx = 1; idx <= k; idx++) {
             W_steps[idx] = {};
             for (int u : W_steps[idx - 1]) {
                 for (const auto& e : graph.getConnections(u)) {
                     if (d_hat[u] + e.weight <= d_hat[e.dest]) {
                         d_hat[e.dest] = d_hat[u] + e.weight;
+                        predecessors[e.dest] = u;
                         if (d_hat[e.dest] < B) {
                             W_steps[idx].insert(e.dest);
                         }
@@ -34,21 +40,6 @@ FindPivotResult findPivots(Graph& graph,
                 return results;
             }
         }
-
-        // final 
-        int numVertices = graph.getNumVertices();
-        std::vector<int> predecessors(numVertices, -1);
-        for (int u : W) {
-            for (const auto& e : graph.getConnections(u)){
-                if (W.count(u) && W.count(e.dest) && d_hat[e.dest] == d_hat[u] + e.weight){
-                    predecessors[e.dest] = u;
-                }
-            }
-        }
-
-
-        std::unordered_map<int, int> tree_sizes;
-
         // Loop through every vertex 'v' in our forest...
         for (int v : W) {
             // Find the root of the tree containing 'v'
