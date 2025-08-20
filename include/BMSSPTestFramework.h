@@ -12,7 +12,7 @@
 // Test case structures
 enum class GraphType {
     RANDOM_SPARSE,
-    RANDOM_DENSE, 
+    RANDOM_DENSE,
     TREE,
     CYCLE,
     GRID_2D,
@@ -73,10 +73,10 @@ struct BMSSPTestCase {
     double bound;
     TestParameters params;
     std::string description;
-    
+
     // Default constructor
     BMSSPTestCase() : graph(1), bound(0.0) {}
-    
+
     // Constructor with graph size
     BMSSPTestCase(int n) : graph(n), bound(0.0) {}
 };
@@ -123,7 +123,7 @@ struct AlgorithmComparison {
 class BMSSPTestFramework {
 private:
     std::mt19937 rng;
-    
+
     // Graph generation helpers
     Graph generateRandomGraph(int n, int m, WeightDistribution weight_dist);
     Graph generateTreeGraph(int n, WeightDistribution weight_dist);
@@ -132,54 +132,54 @@ private:
     Graph generateStarGraph(int n, WeightDistribution weight_dist);
     Graph generateCompleteGraph(int n, WeightDistribution weight_dist);
     Graph generateDisconnectedGraph(int n, int components, WeightDistribution weight_dist);
-    
+
     // New connected graph generation function
     Graph generateConnectedGraph(int num_vertices, int num_edges, WeightDistribution dist, bool is_directed = true);
-    
+
     // Weight generation helpers
     double generateWeight(WeightDistribution dist);
     std::vector<double> generateWeights(int count, WeightDistribution dist);
-    
+
     // Source set generation helpers
     std::vector<int> generateRandomSources(const Graph& g, int count);
     std::vector<int> generateClusteredSources(const Graph& g, int count);
     std::vector<int> generateSpreadSources(const Graph& g, int count);
     std::vector<int> generateCornerCaseSources(const Graph& g, SourceGenMethod method);
-    
+
     // Bound generation helpers
     double generateBound(const Graph& g, const std::vector<int>& sources, BoundType type);
     double calculateOptimalBound(const Graph& g, const std::vector<int>& sources);
-    
+
 public:
     BMSSPTestFramework(unsigned int seed = std::chrono::steady_clock::now().time_since_epoch().count());
-    
+
     // Reference implementation for verification (moved to public for performance tests)
     std::vector<double> runReferenceDijkstra(const Graph& g, const std::vector<int>& sources);
-    
+
     // Main test case generation
     BMSSPTestCase generateTestCase(const TestParameters& params);
     std::vector<BMSSPTestCase> generateTestSuite();
-    
+
     // Test execution
     BMSSPTestOutput executeBMSSP(const BMSSPTestCase& test_case);
-    
+
     // Verification methods
     VerificationResult verifyCorrectness(const BMSSPTestCase& test_case, const BMSSPTestOutput& output);
     PerformanceMeasurement measurePerformance(const BMSSPTestCase& test_case);
     AlgorithmComparison compareWithDijkstra(const BMSSPTestCase& test_case);
-    
+
     // Specialized test generators
     std::vector<BMSSPTestCase> generateCorrectnessTests();
     std::vector<BMSSPTestCase> generatePerformanceTests();
     std::vector<BMSSPTestCase> generateEdgeCaseTests();
     std::vector<BMSSPTestCase> generateScalingTests();
-    
+
     // Test suite execution
     void runComprehensiveTestSuite();
     void runCorrectnessTestSuite();
     void runPerformanceTestSuite();
     void runEdgeCaseTestSuite();
-    
+
     // Reporting
     void generateTestReport(const std::vector<VerificationResult>& results,
                            const std::vector<PerformanceMeasurement>& performance);

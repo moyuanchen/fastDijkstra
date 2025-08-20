@@ -25,7 +25,7 @@ PYBIND11_MODULE(fastdijkstra, m) {
         .def(py::init<int, const std::vector<std::vector<int>>&, const std::vector<double>&>())
         .def("getNumVertices", &Graph::getNumVertices, "Get the number of vertices in the graph")
         .def("getConnections", &Graph::getConnections, "Get connections from a source vertex")
-        .def("addEdge", &Graph::addEdge, "Add an edge to the graph", 
+        .def("addEdge", &Graph::addEdge, "Add an edge to the graph",
              py::arg("src"), py::arg("dest"), py::arg("weight") = 1.0)
         .def("calcK", &Graph::calcK, "Calculate K parameter for BMSSP algorithm")
         .def("calcT", &Graph::calcT, "Calculate T parameter for BMSSP algorithm")
@@ -70,21 +70,21 @@ PYBIND11_MODULE(fastdijkstra, m) {
         .def_readwrite("new_bound", &PullResults::new_bound);
 
     // Main algorithm functions
-    m.def("runDijkstra", &runDijkstra, 
-          "Run Dijkstra's algorithm for single-source shortest paths", 
+    m.def("runDijkstra", &runDijkstra,
+          "Run Dijkstra's algorithm for single-source shortest paths",
           py::arg("graph"), py::arg("source"));
-    
-    m.def("runBaseCase", &runBaseCase, 
-          "Run base case for BMSSP algorithm using Bellman-Ford-like method", 
+
+    m.def("runBaseCase", &runBaseCase,
+          "Run base case for BMSSP algorithm using Bellman-Ford-like method",
           py::arg("graph"), py::arg("src"), py::arg("B"));
-    
-    m.def("runBMSSP", &runBMSSP, 
+
+    m.def("runBMSSP", &runBMSSP,
           "Run BMSSP recursive algorithm achieving O(m log^(2/3) n) complexity.\n"
           "Main algorithm calls this with parameters:\n"
           "- level = ⌈(log n)/t⌉\n"
-          "- S = {s} (single source)\n" 
+          "- S = {s} (single source)\n"
           "- B = ∞ (infinite bound)\n"
-          "The algorithm uses FindPivots and partial sorting for optimal performance.", 
+          "The algorithm uses FindPivots and partial sorting for optimal performance.",
           py::arg("graph"), py::arg("distances"), py::arg("predecessors"),
           py::arg("level"), py::arg("B"), py::arg("S"));
 

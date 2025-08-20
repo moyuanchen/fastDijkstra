@@ -6,15 +6,15 @@
 
 Graph::Graph (int n) {
     DEBUG_FUNCTION_ENTRY("Graph::Graph", "n=" << n);
-    
+
     this->num_vertices = n;
     this->adjList.resize(n);
-    
+
     DEBUG_MEMORY("Allocated adjacency list with size=" << adjList.size());
-    
+
     this->calcK();
     this->calcT();
-    
+
     DEBUG_PRINT("Graph created: n=" << num_vertices << ", k=" << k << ", t=" << t);
 }
 
@@ -34,7 +34,7 @@ Graph::Graph (int n, const std::vector<std::vector<int>>& edges, const std::vect
 }
 
 // Copy constructor
-Graph::Graph(const Graph& other) 
+Graph::Graph(const Graph& other)
     : num_vertices(other.num_vertices), adjList(other.adjList), k(other.k), t(other.t) {
 }
 
@@ -51,23 +51,23 @@ Graph& Graph::operator=(const Graph& other) {
 
 void Graph::addEdge(int src, int dest, double weight) {
     DEBUG_FUNCTION_ENTRY("Graph::addEdge", "src=" << src << ", dest=" << dest << ", weight=" << weight);
-    
+
     DEBUG_BOUNDS_CHECK(src, num_vertices, "source vertex");
     DEBUG_BOUNDS_CHECK(dest, num_vertices, "destination vertex");
-    
-    Edge e; 
-    e.dest = dest; 
+
+    Edge e;
+    e.dest = dest;
     e.weight = weight;
-    
+
     size_t old_size = this->adjList[src].size();
     this->adjList[src].push_back(e);
-    
+
     DEBUG_DATASTRUCTURE("ADD_EDGE", "adjList[" << src << "] size: " << old_size << " -> " << adjList[src].size());
 }
 
 std::vector<Edge> Graph::getConnections(int src) const {
     DEBUG_BOUNDS_CHECK(src, num_vertices, "source vertex in getConnections");
-    
+
     if (src >= 0 && src < num_vertices) {
         return this->adjList[src];
     } else {

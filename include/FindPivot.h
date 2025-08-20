@@ -10,7 +10,7 @@ struct FindPivotResult {
 };
 
 FindPivotResult findPivots(
-    Graph& graph, 
+    Graph& graph,
     double B,  //upper bound
     std::unordered_set<int>& S, // frontier set
     std::vector<double>& d_hat //current best distances

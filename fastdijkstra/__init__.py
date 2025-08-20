@@ -16,7 +16,7 @@ to achieve the optimal O(m log^(2/3) n) running time.
 
 Example usage:
     >>> import fastdijkstra as fd
-    >>> 
+    >>>
     >>> # Create a graph with 4 vertices
     >>> graph = fd.Graph(4)
     >>> graph.addEdge(0, 1, 2.0)
@@ -24,7 +24,7 @@ Example usage:
     >>> graph.addEdge(1, 2, 1.0)
     >>> graph.addEdge(1, 3, 7.0)
     >>> graph.addEdge(2, 3, 3.0)
-    >>> 
+    >>>
     >>> # Run Dijkstra from vertex 0
     >>> result = fd.runDijkstra(graph, 0)
     >>> print("Distances:", result.distances)

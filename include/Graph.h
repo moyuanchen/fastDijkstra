@@ -21,10 +21,10 @@ class Graph {
     Graph(int n);
     Graph(int n, const std::vector<std::vector<int>>& edges);
     Graph(int n, const std::vector<std::vector<int>>& edges, const std::vector<double>& weights);
-    
+
     // Copy constructor
     Graph(const Graph& other);
-    
+
     // Assignment operator
     Graph& operator=(const Graph& other);
 
@@ -37,7 +37,7 @@ class Graph {
     void calcT();
     int getT() const;
     int getK() const;
-    
+
     void printAdjacencyList();
 
 };

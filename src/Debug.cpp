@@ -61,7 +61,7 @@ void initializeDebug(int argc, char* argv[]) {
             break;
         }
     }
-    
+
     // Also check environment variable
     const char* debug_env = std::getenv("DEBUG_BMSSP");
     if (debug_env && (strcmp(debug_env, "1") == 0 || strcmp(debug_env, "true") == 0)) {

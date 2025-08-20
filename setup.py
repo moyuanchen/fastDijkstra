@@ -13,7 +13,7 @@ ext_modules = [
         [
             "python/bindings.cpp",
             "src/Graph.cpp",
-            "src/BatchHeap.cpp", 
+            "src/BatchHeap.cpp",
             "src/Dijkstra.cpp",
             "src/FindPivot.cpp",
             "src/BMSSP.cpp",
