@@ -56,7 +56,15 @@ target_link_libraries(test_large_scale PRIVATE core_algorithms)
 add_executable(test_correctness_large tests/test_correctness_large.cpp)
 target_link_libraries(test_correctness_large PRIVATE core_algorithms)
 
-# 7. Master Test Runner (orchestrates all test suites)
+# 7. BMSSP vs Dijkstra Benchmark (100K nodes performance comparison)
+add_executable(test_bmssp_dijkstra_benchmark tests/test_bmssp_dijkstra_benchmark.cpp)
+target_link_libraries(test_bmssp_dijkstra_benchmark PRIVATE core_algorithms)
+
+# 7b. Small Scale Benchmark Test (verification of benchmark framework)
+add_executable(test_small_benchmark tests/test_small_benchmark.cpp)
+target_link_libraries(test_small_benchmark PRIVATE core_algorithms)
+
+# 8. Master Test Runner (orchestrates all test suites)
 add_executable(run_all_tests tests/run_all_tests.cpp)
 target_link_libraries(run_all_tests PRIVATE core_algorithms)
 
