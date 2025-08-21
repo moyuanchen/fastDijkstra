@@ -9,13 +9,21 @@ This package provides high-performance implementations of:
 The BMSSP algorithm is the main algorithm that calls the recursive BMSSP procedure with parameters:
 - l = ⌈(log n)/t⌉ (initial level)
 - S = {s} (single source vertex)
-- B = ∞ (infinite bound)
+- B = ∞ (infinite bound, supports both float('inf') and numpy.inf)
 
 The algorithm uses partial sorting with heap-like data structures and FindPivots procedure
 to achieve the optimal O(m log^(2/3) n) running time.
 
+Infinity Support:
+- float('inf') and numpy.inf are both supported for infinite bounds
+- The C++ implementation properly handles Python infinity values
+- Unreachable vertices are represented with infinity values
+
 Example usage:
     >>> import fastdijkstra as fd
+    >>> import math
+    >>> # Optional: import numpy if available for np.inf support
+    >>> # import numpy as np
     >>>
     >>> # Create a graph with 4 vertices
     >>> graph = fd.Graph(4)
@@ -30,20 +38,32 @@ Example usage:
     >>> print("Distances:", result.distances)
     >>> print("Predecessors:", result.predecessors)
     >>>
-    >>> # Run BMSSP algorithm (main algorithm)
+    >>> # Run BMSSP algorithm with mathematical formulation:
+    >>> # l = ⌈(log n)/t⌉, S = {s}, B = ∞
     >>> graph.calcK()
     >>> graph.calcT()
-    >>> distances = [float('inf')] * graph.getNumVertices()
-    >>> predecessors = [-1] * graph.getNumVertices()
-    >>> distances[0] = 0.0
-    >>> import math
-    >>> level = math.ceil(math.log(graph.getNumVertices()) / graph.getT())
-    >>> result = fd.runBMSSP(graph, distances, predecessors, level, float('inf'), [0])
+    >>> n = graph.getNumVertices()
+    >>> t = graph.getT()
+    >>> 
+    >>> # Initialize arrays for BMSSP
+    >>> distances = [float('inf')] * n  # Can also use np.inf
+    >>> predecessors = [-1] * n
+    >>> distances[0] = 0.0  # Source vertex
+    >>> 
+    >>> # BMSSP parameters as per the mathematical formulation
+    >>> level = math.ceil(math.log(n) / t) if t > 0 else 1  # l = ⌈(log n)/t⌉
+    >>> S = [0]  # S = {s} (single source)
+    >>> B = float('inf')  # B = ∞ (infinite bound, np.inf also works)
+    >>> 
+    >>> # Run BMSSP algorithm
+    >>> result = fd.runBMSSP(graph, distances, predecessors, level, B, S)
+    >>> print("BMSSP completed with new bound:", result.new_bound)
+    >>> print("Final distances:", distances)
 """
 
 __version__ = "0.1.0"
-__author__ = "Your Name"
-__email__ = "your.email@example.com"
+__author__ = "Mike"
+__email__ = ""
 
 # Import the compiled C++ module
 try:
