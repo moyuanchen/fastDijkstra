@@ -9,7 +9,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(fastdijkstra, m) {
+PYBIND11_MODULE(_fastdijkstra, m) {
     m.doc() = "Fast Dijkstra and BMSSP algorithms for shortest path computation achieving O(m log^(2/3) n) complexity";
 
     // Edge struct
